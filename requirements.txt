@@ -1,2 +1,6 @@
 pyyaml
 requests
+pytz=2022.1
+boto3
+botocore
+urllib3
