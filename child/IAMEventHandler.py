@@ -1,4 +1,4 @@
-from utils import EventHandler, Configruation, EventResponse
+from utils import EventHandler, Configruation, EventResponse,Utils
 from GenericEventClassifier import GenericEventClassifier
 import unittest
 import datetime
@@ -8,7 +8,9 @@ class IAMEventHandler(EventHandler):
     def __init__(self, appConfig):
         self.name = 'IAM Event Handler'
         super().__init__(self.name, appConfig)
-        self.severity_map = self.appConfig['Severity']['IAM']
+        self.timezone = self.appConfig["Notifications"]["Time"]["Timezone"]
+        self.startTime, self.endTime = Utils.time_value_assign(self.appConfig, "IAM")
+        self.severity_map = self.appConfig["Severity"]["IAM"]
         print("[*]IAM Event Classifier loaded with required configuration")
     
     def handle_event(self, event, aws_account):
@@ -322,7 +324,14 @@ class IAMEventHandler(EventHandler):
 
         
     def classify_event(self, event, resp):
-        if resp.skipped == False:
+                # Skips the alert if the event is in office time and not root login
+        if self.startTime != None and self.endTime != None and "root" not in resp.userName:
+            if Utils.check_time(self.startTime, self.endTime,self.timezone) == False:
+                print(f"[!]Invoked Time is within office hours. Skipping")
+                resp.skipped = True
+                pass
+        
+        elif resp.skipped == False:
             eventClassifier = GenericEventClassifier(self.severity_map)
             data = eventClassifier.classify_event(resp.author_name, resp.eventName)
             resp.severity = data['severity']

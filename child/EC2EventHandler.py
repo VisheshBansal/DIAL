@@ -1,4 +1,4 @@
-from utils import EventHandler, Configruation, EventResponse
+from utils import EventHandler, Configruation, EventResponse,Utils
 import unittest
 import datetime
 import re
@@ -8,8 +8,10 @@ class EC2EventHandler(EventHandler):
     def __init__(self, appConfig):
         self.name = 'EC2 Event Handler'
         super().__init__(self.name, appConfig)
-        self.neglected_users = self.appConfig['Static']['EC2']['Whitelisted-User-Ip']
-        self.severity_map = self.appConfig['Severity']['EC2']
+        self.neglected_users = self.appConfig["Static"]["EC2"]["Whitelisted-User-Ip"]
+        self.timezone = self.appConfig["Notifications"]["Time"]["Timezone"]
+        self.startTime, self.endTime = Utils.time_value_assign(self.appConfig, "EC2")
+        self.severity_map = self.appConfig["Severity"]["EC2"]
         print("[*]EC2 Event Classifier loaded with required configuration")
     
     def handle_event(self, event_data, aws_account):
@@ -46,6 +48,13 @@ class EC2EventHandler(EventHandler):
             print(f'[!]Username[{username}] or IP[{ip}] in whitelist. Skipping')
             eventResponse.skipped = True
             pass
+
+         # If time is during office hours/ not none, then this script will not be invoked.
+        elif self.startTime != None and self.endTime != None:
+            if Utils.check_time(self.startTime, self.endTime,self.timezone) == False:
+                print(f"[!]Invoked Time is within office hours. Skipping")
+                eventResponse.skipped = True
+                pass
         
         else:
             print(f"[+]At EC2 asset tracker handler with event: {eventName}")

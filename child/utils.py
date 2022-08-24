@@ -6,7 +6,8 @@ import json
 import sys
 import requests
 from urllib import request
-from datetime import datetime
+from datetime import datetime, timedelta
+import pytz
 
 from abc import abstractmethod
 
@@ -666,6 +667,44 @@ class Utils:
 
         except Exception as em:
             return None
+
+    # Read startTime endTime. If time between startTime and endTime or on a weekend return True
+    def check_time(startTime, endTime,time_zone="Asia/Kolkata"):
+        now = datetime.now().utcnow()
+        now = now.replace(tzinfo=pytz.utc).astimezone(pytz.timezone(time_zone))
+        startTime = startTime.split(":")
+        endTime = endTime.split(":")
+        startTime = now.replace(hour=int(startTime[0]), minute=int(startTime[1]), second=int(startTime[2]), microsecond=0)
+        endTime =  now.replace(hour=int(endTime[0]), minute=int(endTime[1]), second=int(endTime[2]), microsecond=0)
+        midnight = now.replace(hour=0,minute=0,second=0)
+        if endTime >= now >= midnight:
+            startTime = startTime - timedelta(days=1)
+        elif (midnight + timedelta(days=1)) >= now >= startTime:
+            endTime = endTime + timedelta(days=1)
+    
+        if now.weekday() >= 5:
+            print("Weekend access!")
+            return True
+        elif startTime <= now <= endTime:
+            return True
+        else:
+            return False
+
+    # Pass key as the Service Name
+    def time_value_assign(appConfig, key):
+        try:
+            time_check = (
+                appConfig["Static"][key]["Time"]
+                if appConfig["Static"][key]["Time"] != None
+                else appConfig["Notifications"]["Time"]
+            )
+            startTime = time_check.get("StartTime", None)
+            endTime = time_check.get("EndTime", None)
+        except Exception as e:
+            startTime = None
+            endTime = None
+
+        return startTime, endTime
 
 class Configruation:
     def __init__(self, profile='default', config_folder=''):

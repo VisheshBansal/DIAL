@@ -11,8 +11,10 @@ class S3AccessAlerts(EventHandler):
     def __init__(self, appConfig):
         name = "S3"
         super().__init__(name, appConfig)
-        self.severity_map = appConfig['Severity']['S3']
-        self.neglected_users = self.appConfig['Static']['S3']['Whitelisted-Users']
+        self.severity_map = appConfig["Severity"]["S3"]
+        self.timezone = self.appConfig["Notifications"]["Time"]["Timezone"]
+        self.neglected_users = self.appConfig["Static"]["S3"]["Whitelisted-Users"]
+        self.startTime, self.endTime = Utils.time_value_assign(self.appConfig, "S3")
     
     def handle_event(self, event_data, aws_account):
         response = self.get_event_response(event_data, aws_account)
@@ -54,6 +56,12 @@ class S3AccessAlerts(EventHandler):
             print("[+]Got whitelisted user/ip hence skipping")
             eventResponse.skipped = True
             return eventResponse
+
+        elif self.startTime != None and self.endTime != None:
+            if Utils.check_time(self.startTime, self.endTime,self.timezone) == False:
+                print(f"[!]Invoked Time is within office hours. Skipping")
+                eventResponse.skipped = True
+                return eventResponse
         
         if error:
             error_message = event['errorMessage']

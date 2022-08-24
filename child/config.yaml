@@ -10,6 +10,10 @@ default:
       Enabled: true 
       Master-URL: <apiGatewayURL>/Prod/DIALv2
       X-DIALv2-Master-auth: <authenticationToken>
+    Time:
+      StartTime: 'HH:MM:SS' #22:00:00
+      EndTime:  'HH:MM:SS' #07:00:00
+      Timezone: "Asia/Kolkata"
 
   Static: &defaultStaticMap
     Enrichment-URL: https://ipinfo.io/ 
@@ -20,6 +24,9 @@ default:
     EC2: &defaultStaticEC2Config
       Whitelisted-User-Ip:
         - sampleWhiteListedUsers
+      Time:
+        StartTime: '23:00:00'
+        EndTime: '06:00:00'
       Event-Map:
         EC2:
         - RunInstances
@@ -53,6 +60,13 @@ default:
     S3:
       Whitelisted-Users:
         - exampleWhitelistedUser
+      Time:
+        StartTime: 'HH:MM:SS' #22:00:00
+        EndTime:  'HH:MM:SS' #07:00:00
+    IAM:
+      Time:
+        StartTime: 'HH:MM:SS' #22:00:00
+        EndTime:  'HH:MM:SS' #07:00:00
 
   Severity:
     EC2: &defaultSeverityMapEC2
